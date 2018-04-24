@@ -175,48 +175,32 @@ class PetModel():
         print ("p value",p,", q value ",q,", total time ",t, ", total risk cost (before times p)",r,
                ", optimal value ",currentObj)
     
-    def NoRisk(self,p,q):   
-        initialState = state(0.5,0,0,1.0)
-        initialState.setCost(0)
-        stageList = [initialState]
-        endState = None
-        bestObj = 10000
-        stageCount = 0
-        while stageList:
-            currentState = stageList.pop(0)
-            x = currentState.getx()
-            t = currentState.getStage()
-            stageCount += 1
-            if x == self.distance:
-                per = currentState.getActionPercent()
-                r = currentState.getCost()
-                currentObj = p*r + (t-1 + per)*self.time_interval*q
-                if currentObj < bestObj:
-                    endState = currentState
-                    bestObj = currentObj
-                    total_time = (t-1 + per)*self.time_interval
-                    best_r = r
-            
-            if ((t < self.stage) and (x < self.distance) and self.checkArrivalOnTime(x,t)):
-                rowCount = int(floor(x / self.distance_block))
-                '''Check time period when we reach currentState.'''
-                columnCount = int(floor(t * self.time_interval / self.time_block))
-                '''Get information of driving condition and transform into driver's 
-                performance'''
-                weatherWeight = self.parameter[rowCount][columnCount][0]
-                trafficWeight = self.parameter[rowCount][columnCount][1]
-                if weatherWeight == 1 and trafficWeight == 1:
-                    actions = [0]
-                else:
-                    actions = self.action
-                for a in actions:
-                    newState = self.transition(currentState,a)
-                    stageList.append(newState)
+    def NoRisk(self,speed, p,q):   
+        currentState = state(0.5,0,0,1.0)
+        currentState.setCost(0)
+        distance = 0
+        time = 0
+        while distance < self.distance:
+            time += 1
+            rowCount = int(floor(distance / self.distance_block))
+            columnCount = int(floor(time * self.time_interval / self.time_block))
+            weatherWeight = self.parameter[rowCount][columnCount][0]
+            trafficWeight = self.parameter[rowCount][columnCount][1]
+            if weatherWeight == 1 and trafficWeight == 1:
+                currentState = self.transition(currentState,0)
+            else:
+                currentState = self.transition(currentState,speed)
+            distance = currentState.getx()
+        per = currentState.getActionPercent()
+        t = currentState.getStage()
+        t = (t - 1 + per) * self.time_interval
+        r = currentState.getCost()
+        currentObj = p*r + t*q
+        best_action = currentState.getActionHistory()
+        print ("No Risk at speed ",speed)
+        print ("p value",p,", q value ",q,", total time ",t, ", total risk cost (before times p)",r,
+               ", optimal value ",currentObj, ", best action ",best_action)
 
-        best_action = endState.getActionHistory()
-        print ("No Risk Policy")
-        print ("p value",p,", q value ",q,", total time ",total_time, ", total risk cost (before times p)",best_r,
-               ", best action ",best_action,", optimal value ",bestObj, ", total stage considered ",stageCount)
                    
   
         
