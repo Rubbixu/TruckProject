@@ -206,7 +206,7 @@ class PetModel():
                 weatherWeight = self.parameter[rowCount][columnCount][0]
                 trafficWeight = self.parameter[rowCount][columnCount][1]
                 if weatherWeight == 1 and trafficWeight == 1:
-                    actions = [55,75]
+                    actions = [0]
                 else:
                     actions = self.action
                 for a in actions:

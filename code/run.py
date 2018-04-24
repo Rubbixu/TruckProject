@@ -3,6 +3,8 @@ from valueiteration import ValueIterationModel
 from PetModel import PetModel
 
 a = PetModel()
+''' change different p and q '''
+
 p = 1.0
 q = 1.0
 # =============================================================================
@@ -10,15 +12,19 @@ q = 1.0
 # q = float(input("Please insert q: "))
 # =============================================================================
 print("\nThe result of original optimization: ")
+
+''' If you want to use a different dataset, replacing 'data.xlsx' with your filename'''
+
 a.readData('data.xlsx',1)
-print(a.parameter)
-print(a.stage)
-print(a.distance)
-a.printStage()
-#a.ObjectiveOptimization(p,q)
-#
-#a.NoStop(75,p,q)
-#a.NoRisk(p,q)
+#print(a.parameter)
+#print(a.stage)
+#print(a.distance)
+#a.printStage()
+a.ObjectiveOptimization(p,q)
+
+''' change first argument to try a different speed '''
+a.NoStop(75,p,q)
+a.NoRisk(p,q)
 # =============================================================================
 # print("\nThe result of value iteration: ")
 # b = ValueIterationModel(p,q)
