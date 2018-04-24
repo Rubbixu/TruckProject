@@ -24,7 +24,7 @@ a.ObjectiveOptimization(p,q)
 
 ''' change first argument to try a different speed '''
 a.NoStop(75,p,q)
-a.NoRisk(p,q)
+a.NoRisk(75,p,q)
 # =============================================================================
 # print("\nThe result of value iteration: ")
 # b = ValueIterationModel(p,q)
