@@ -5,7 +5,7 @@ from PetModel import PetModel
 a = PetModel()
 ''' change different p and q '''
 
-p = 1.0
+p = 10.0
 q = 1.0
 # =============================================================================
 # p = float(input("Please insert p: "))
@@ -15,21 +15,22 @@ print("\nThe result of original optimization: ")
 
 ''' If you want to use a different dataset, replacing 'data.xlsx' with your filename'''
 
-a.readData('data.xlsx',1)
+a.readData('data.xlsx',2)
 #print(a.parameter)
 #print(a.stage)
 #print(a.distance)
 #a.printStage()
 a.ObjectiveOptimization(p,q)
 
+#a.readData('data.xlsx',1)
 ''' change first argument to try a different speed '''
-a.NoStop(75,p,q)
-a.NoRisk(75,p,q)
-# =============================================================================
-# print("\nThe result of value iteration: ")
-# b = ValueIterationModel(p,q)
-# b.Optimizer()
-# =============================================================================
+#a.NoStop(75,p,q)
+#a.NoRisk(75,p,q)
+print("\nThe result of value iteration: ")
+b = ValueIterationModel(p,q)
+b.readData('data.xlsx',1)
+b.Optimizer(100.0,0.0)
+
 # =============================================================================
 # decision = None
 # while (decision != 'y' and decision != 'n'): 

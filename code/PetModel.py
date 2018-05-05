@@ -74,6 +74,7 @@ class PetModel():
     def getCost(self, weight,g,percent,action):
         cost = (0.002*self.time_interval +
                 0.005*g*percent*action*self.time_interval*(weight**2))
+        cost = round(cost,2)
         return cost
 
 
@@ -186,7 +187,7 @@ class PetModel():
             columnCount = int(floor(time * self.time_interval / self.time_block))
             weatherWeight = self.parameter[rowCount][columnCount][0]
             trafficWeight = self.parameter[rowCount][columnCount][1]
-            if weatherWeight == 1 and trafficWeight == 1:
+            if (weatherWeight == 1 and trafficWeight == 1):
                 currentState = self.transition(currentState,0)
             else:
                 currentState = self.transition(currentState,speed)

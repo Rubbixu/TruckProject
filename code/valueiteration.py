@@ -1,9 +1,9 @@
 from math import floor
-from state import state,stateTree
-
+from state import stateTree
+import xlrd
 
 class ValueIterationModel():
-    def __init__(self,p,q):
+    def __init__(self,p=1.0,q=1.0):
         
         
         """also could import parameters in excel, parameter is weather and traffic 
@@ -19,6 +19,7 @@ class ValueIterationModel():
         self.distance = 100
         """action sets"""
         self.action = [0,55,75]
+        self.maxSpeed = self.action[-1]
         """time period for each stage"""
         self.time_interval = 0.5
         """Number of stages we want to check. Here we can use this to limit the
@@ -30,14 +31,29 @@ class ValueIterationModel():
         self.distance_block = 25
         self.p = p
         self.q = q
+        self.g_upper = 0
+        self.g_lower = 0
     
-    
+    def readData(self, filename, sheet_index):
+        wb = xlrd.open_workbook(filename)
+        sh = wb.sheet_by_index(sheet_index)
+        row = sh.nrows - 2
+        col = sh.ncols - 2
+        self.parameter = []   
+        for i in range(0,row,2):
+            rowinfo = []
+            for j in range(col):
+                weightInfo = int(sh.cell(i+2,j+2).value)
+                trafficInfo = int(sh.cell(i+3,j+2).value)
+                rowinfo.append((weightInfo,trafficInfo))
+            self.parameter.append(rowinfo)
+        self.distance = self.distance_block * row/2
+        self.stage = col
+        
     '''Caculate driving performance for each state.
        Current state is to record the distance from origin and block is 
        the criteria to get each segment.''' 
-    def checkWeight(self,currentState):
-        x = currentState.getx()
-        t = currentState.getStage()
+    def checkWeight(self,x,t):
         '''Check in which segment currentState is'''
         rowCount = int(floor(x / self.distance_block))
         '''Check time period when we reach currentState.'''
@@ -56,17 +72,15 @@ class ValueIterationModel():
     def getCost(self, weight,g,percent,action):
         cost = (0.002*self.time_interval +
                 0.005*g*percent*action*self.time_interval*(weight**2))
+        cost = round(cost,2)
         return cost
 
 
     '''Transition function: for each stage, we need know x, g, t and using 
     'checkWeight' to find w.'''
-    def transition(self, currentState, action):
-        g = currentState.getg()
-        x = currentState.getx()
-        t = currentState.getStage()
-        cost = currentState.getCost()
-        weight = self.checkWeight(currentState)
+    def transition(self, x, t, currentState, action):
+        g,cost,history = currentState
+        weight = self.checkWeight(x,t)
         '''25 here is block to decide segment. Then Check whether driver finish the whole route. 
         If finished, we need check actual time we need by using variabel percent'''
         if x + action*self.time_interval > self.distance:
@@ -78,50 +92,65 @@ class ValueIterationModel():
             new_x = x + action*self.time_interval
         new_g = g + percent*self.time_interval*weight*0.1*action - self.time_interval*0.1*(action==0)
         new_g = round(new_g,2)
-        new_t = t + 1
-        new_p = percent
-        newState = state(new_g,new_x,new_t,new_p)
-        newState.updateAction(currentState,action)
-        newState.setCost(cost+self.getCost(weight,new_g,percent,action))
-        return newState
+        new_cost = cost + self.getCost(weight,new_g,percent,action)
+        new_history = history[:]
+        new_history.append(action)
+        return new_g,new_cost,new_history,percent,new_x
     
-    def Optimizer(self):
+    def checkArrivalOnTime(self,x,t):
+        if self.maxSpeed * (self.stage - t)*self.time_interval + x >= self.distance:
+            return True
+        else:
+            return False
+    
+    def gboundary(self,g):
+        l = len(self.action)
+        if g < self.g_lower:
+            return 1,l
+        if g> self.g_upper:
+            return 0,1
+        return 0,l
+    
+    def Optimizer(self,g_upper=100.0,g_lower=0.0):
+        self.g_upper = g_upper
+        self.g_lower = g_lower
         bestObj = 10000
         states = stateTree(self.stage)
-        initialState = state(0.5,0,0,1.0)
-        states[0][0] = {}
-        states[0][0][0.5] = initialState
+        states[0][0] = [(0.5,0,[])]
+        state_count = 0
         for t in range(self.stage):
+            new_t = t + 1
             for x in states[t]:
-                for g in states[t][x]:
-                    currentState = states[t][x][g]
-                    for a in self.action:
-                        newState = self.transition(currentState,a)
-                        new_x = newState.getx()
-                        new_t = newState.getStage()
+                if not self.checkArrivalOnTime(x,t):
+                    continue
+                states[t][x].sort(key=lambda element: (element[0], element[1]))
+                max_cost = 10000
+                for currentState in states[t][x]:
+                    state_count += 1
+                    g,cost,_ = currentState
+                    if cost >= max_cost:
+                        continue
+                    else:
+                        max_cost = cost
+                    ind_min,ind_max = self.gboundary(g)
+                    for a in self.action[ind_min:ind_max]:
+                        new_g,new_cost,new_history,percent,new_x = self.transition(x,t,currentState,a)
                         if new_x == self.distance:
-                            r = newState.getCost()
-                            per = newState.getActionPercent()
-                            currentObj = self.p*r + (new_t-1 + per)*self.time_interval*self.q
+                            state_count += 1
+                            currentObj = self.p*new_cost + (new_t-1 + percent)*self.time_interval*self.q
                             if currentObj < bestObj:
                                 bestObj = currentObj
-                                total_time = (new_t-1 + per)*self.time_interval
-                                best_action = newState.getActionHistory()
-                                best_r = r
+                                total_time = round((new_t-1 + percent)*self.time_interval,2)
+                                best_action = new_history
+                                best_c = new_cost
                         if ((new_t < self.stage) and (new_x < self.distance)):
-                            new_g = newState.getg()
+                            newState=(new_g,new_cost,new_history)
                             if new_x not in states[new_t]:
-                                states[new_t][new_x] = {}
-                                states[new_t][new_x][new_g] = newState
+                                states[new_t][new_x] = []
+                                states[new_t][new_x].append(newState)
                             else:
-                                if new_g not in states[new_t][new_x]:
-                                    states[new_t][new_x][new_g] = newState
-                                else:
-                                    r = newState.getCost()
-                                    r_old = states[new_t][new_x][new_g].getCost()
-                                    if r < r_old:
-                                        states[new_t][new_x][new_g] = newState
-        print ("p value",self.p,", q value ",self.q,", total time ",total_time, ", total risk cost (before times p)",best_r,
-               ", best action ",best_action,", optimal value ",bestObj)
+                                states[new_t][new_x].append(newState)
+        print ("p value",self.p,", q value ",self.q,", total time ",total_time, ", total risk cost (before times p)",best_c,
+               ", best action ",best_action,", optimal value ",bestObj, ", total stage considered ",state_count)
                                     
                                 
