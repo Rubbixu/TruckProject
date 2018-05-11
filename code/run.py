@@ -11,16 +11,16 @@ q = 1.0
 # p = float(input("Please insert p: "))
 # q = float(input("Please insert q: "))
 # =============================================================================
-print("\nThe result of original optimization: ")
-
-''' If you want to use a different dataset, replacing 'data.xlsx' with your filename'''
-
-a.readData('data.xlsx',2)
-#print(a.parameter)
-#print(a.stage)
-#print(a.distance)
-#a.printStage()
-a.ObjectiveOptimization(p,q)
+#print("\nThe result of original optimization: ")
+#
+#''' If you want to use a different dataset, replacing 'data.xlsx' with your filename'''
+#
+#a.readData('data.xlsx',2)
+##print(a.parameter)
+##print(a.stage)
+##print(a.distance)
+##a.printStage()
+#a.ObjectiveOptimization(p,q)
 
 #a.readData('data.xlsx',1)
 ''' change first argument to try a different speed '''
@@ -30,7 +30,7 @@ print("\nThe result of value iteration: ")
 b = ValueIterationModel(p,q)
 b.readData('data.xlsx',1)
 b.Optimizer(100.0,0.0)
-
+b.Go([75, 0, 0, 0, 0, 55, 75, 75, 55, 75, 55, 55, 75, 75, 75, 75])
 # =============================================================================
 # decision = None
 # while (decision != 'y' and decision != 'n'): 

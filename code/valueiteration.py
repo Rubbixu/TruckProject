@@ -153,4 +153,20 @@ class ValueIterationModel():
         print ("p value",self.p,", q value ",self.q,", total time ",total_time, ", total risk cost (before times p)",best_c,
                ", best action ",best_action,", optimal value ",bestObj, ", total stage considered ",state_count)
                                     
-                                
+    def Go(self,actions):
+        currentState = (0.5,0,[])
+        x = 0
+        t = 0
+        for a in actions:
+            new_g,new_cost,new_history,percent,x = self.transition(x,t,currentState,a)
+            t += 1
+            if x == self.distance:
+                currentObj = self.p*new_cost + (t-1 + percent)*self.time_interval*self.q
+                total_time = round((t-1 + percent)*self.time_interval,2)
+                print ("p value",self.p,", q value ",self.q,", total time ",total_time, ", total risk cost (before times p)",new_cost,
+               ", all actions executed ",actions == new_history,", objective value ",currentObj)
+                return 0
+            currentState = (new_g,new_cost,new_history)
+        print("I dont think this is working")
+                
+                                             
