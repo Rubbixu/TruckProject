@@ -11,5 +11,5 @@ for i in range(0,row,2):
     for j in range(col):
         weightInfo = int(sh.cell(i+2,j+2).value)
         trafficInfo = int(sh.cell(i+3,j+2).value)
-        rowinfo.append([weightInfo,trafficInfo))
+        rowinfo.append((weightInfo,trafficInfo))
     para.append(rowinfo)

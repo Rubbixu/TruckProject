@@ -1,12 +1,13 @@
 '''run file'''
 from valueiteration import ValueIterationModel
 from PetModel import PetModel
-
+import matplotlib.pyplot as plt
 a = PetModel()
 ''' change different p and q '''
 
 p = 10.0
 q = 1.0
+g = 0
 # =============================================================================
 # p = float(input("Please insert p: "))
 # q = float(input("Please insert q: "))
@@ -27,10 +28,33 @@ q = 1.0
 #a.NoStop(75,p,q)
 #a.NoRisk(75,p,q)
 print("\nThe result of value iteration: ")
-b = ValueIterationModel(p,q)
-b.readData('data.xlsx',1)
-b.Optimizer(100.0,0.0)
-b.Go([75, 0, 0, 0, 0, 55, 75, 75, 55, 75, 55, 55, 75, 75, 75, 75])
+b = ValueIterationModel(p,q,g)
+b.readData('data1.xlsx',6)
+g1,c1 = b.Optimizer(num_of_stage = 10)
+print('---------------------------------')
+g2,c2 = b.Optimizer(1)
+if g2 == None:
+    g2 = [0] * len(g1)
+    c2 = [0] * len(g1)
+print('---------------------------------')
+g3,c3 = b.NoStop()
+
+fig, axs = plt.subplots(2, 1)   
+
+axs[0].plot(g1, '-rD', g2, '-bs', g3, '-g^')
+axs[0].set_title('g plot')
+axs[0].set_xlabel('stage')
+axs[0].set_ylabel('g')
+axs[1].plot(c1, '-rD', c2, '-bs', c3, '-g^')
+axs[1].set_xlabel('stage')
+axs[1].set_title('cost plot')
+axs[1].set_ylabel('cost')
+plt.subplots_adjust(hspace=0.8)
+fig.show()
+
+
+
+
 # =============================================================================
 # decision = None
 # while (decision != 'y' and decision != 'n'): 
