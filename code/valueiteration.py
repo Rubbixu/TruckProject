@@ -1,6 +1,7 @@
 from math import floor
 from state import stateTree
 import xlrd
+import matplotlib.pyplot as plt
 
 class ValueIterationModel():
     def __init__(self,p=1.0,q=1.0,g=0.5):
@@ -38,9 +39,10 @@ class ValueIterationModel():
         self.costMultiplier = 0.05
         self.gNone = 0.5
         self.gMultiplier = 0.02
+        self.lastrun_data = []
 
     '''Utility function'''
-    def setP(self,p):
+    def setp(self,p):
         self.p = p
 
     def setq(self,q):
@@ -205,6 +207,7 @@ class ValueIterationModel():
             return 0
         print ("no risk policy ",no_risk == 1, "p value",self.p,", q value ",self.q,", total time ",total_time, ", total risk cost (before times p)",best_c,
                ", best action ",best_action,", optimal value ",bestObj, ", total stage considered ",state_count)
+        self.lastrun_data=[total_time,best_c]
         return self.reconstruct(best_action)
 
     def Go(self,actions):
@@ -240,3 +243,27 @@ class ValueIterationModel():
                ", optimal value ",currentObj)
         return self.reconstruct(new_history)
     
+    def pqratio_plot(self,ratio_list):
+        default_q = self.q
+        time_list = []
+        risk_list =[]
+        for q in ratio_list:
+            self.q = q
+            self.Optimizer()
+            time_list.append(self.lastrun_data[0])
+            risk_list.append(self.lastrun_data[1])
+        fig, ax1 = plt.subplots()   
+        ax1.plot(ratio_list, time_list, '-bD')
+        ax1.set_xlabel('q/p ratio')
+        # Make the y-axis label, ticks and tick labels match the line color.
+        ax1.set_ylabel('time(h)', color='b')
+        ax1.tick_params('y', colors='b')
+        
+        ax2 = ax1.twinx()
+        ax2.plot(ratio_list, risk_list, '-r.')
+        ax2.set_ylabel('risk', color='r')
+        ax2.tick_params('y', colors='r')
+        
+        fig.tight_layout()
+        plt.show()
+        self.q = default_q

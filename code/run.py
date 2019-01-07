@@ -1,8 +1,6 @@
 '''run file'''
 from valueiteration import ValueIterationModel
-from PetModel import PetModel
 import matplotlib.pyplot as plt
-a = PetModel()
 ''' change different p and q '''
 
 p = 10.0
@@ -51,6 +49,8 @@ axs[1].set_title('cost plot')
 axs[1].set_ylabel('cost')
 plt.subplots_adjust(hspace=0.8)
 fig.show()
+q_list=[0.01,0.1,1,2,3,5,10]
+b.pqratio_plot(q_list)
 
 
 
