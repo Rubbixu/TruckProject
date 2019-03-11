@@ -1,7 +1,10 @@
 from math import floor
 from state import stateTree
 import xlrd
+import xlwt
 import matplotlib.pyplot as plt
+
+
 
 class ValueIterationModel():
     def __init__(self,p=1.0,q=1.0,g=0.5):
@@ -40,6 +43,8 @@ class ValueIterationModel():
         self.gNone = 0.5
         self.gMultiplier = 0.02
         self.lastrun_data = []
+        self.logName = 0;
+        
 
     '''Utility function'''
     def setp(self,p):
@@ -131,19 +136,30 @@ class ValueIterationModel():
         return 0,l
 
     '''Based on action history, reconstruct every state taken and print them out'''
-    def reconstruct(self,history):
+    def reconstruct(self,history,information):
         currentState = (self.initial_g,0,[])
         x = 0
         t = 0
         gPlotList = [self.initial_g]
         cPlotList = [0]
+        wb = xlwt.Workbook()
+        ws1 = wb.add_sheet('Sheet 1',cell_overwrite_ok=True)
+        ws1.write(0,0,information)
         for a in history:
             new_g,new_cost,new_history,percent,x = self.transition(x,t,currentState,a)
+            
+            
             gPlotList.append(new_g)
             cPlotList.append(new_cost)
             t += 1
+            
+            ws1.write(t,0,new_g)
+            ws1.write(t,1,new_cost)
             print('Stage %d, action is %d, g is %.2f, cost is %.2f, travel distance is %.1f'% (t,a,new_g,new_cost,x))
             currentState = (new_g,new_cost,new_history)
+        fileName = "log"+str(self.logName) + ".xls"
+        wb.save(fileName)
+        self.logName +=1
         return gPlotList,cPlotList
 
     def checkRisk(self,x,t):
@@ -204,11 +220,12 @@ class ValueIterationModel():
                 return None,None
             else:
                 print ("I don't think this would ever happen")
-            return 0
-        print ("no risk policy ",no_risk == 1, "p value",self.p,", q value ",self.q,", total time ",total_time, ", total risk cost (before times p)",best_c,
-               ", best action ",best_action,", optimal value ",bestObj, ", total stage considered ",state_count)
+                return 0
+        result = "no risk policy: "+str(no_risk == 1) + ", p value:" + str(self.p)+", q value:"+str(self.q)+", total time:"+str(total_time)+ ", total risk cost (before times p):"+ str(best_c) +\
+            ", best action:"+str(best_action)+", optimal value: "+str(bestObj)+ ", total stage considered:"+str(state_count)
+        print(result)
         self.lastrun_data=[total_time,best_c]
-        return self.reconstruct(best_action)
+        return self.reconstruct(best_action,result)
 
     def Go(self,actions):
         currentState = (self.initial_g,0,[])
@@ -239,17 +256,22 @@ class ValueIterationModel():
             currentState = (new_g,new_cost,new_history)
         currentObj = self.p*new_cost + (t-1 + percent)*self.time_interval*self.q
         total_time = round((t-1 + percent)*self.time_interval,2)
-        print ("No Stop at speed ",speed,", p value",self.p,", q value ",self.q,", total time ",total_time, ", total risk cost (before times p)",new_cost,
-               ", optimal value ",currentObj)
-        return self.reconstruct(new_history)
+        result = "No Stop at speed:"+ str(speed) +", p value:" + str(self.p) + ", q value:"+ str(self.q)+", total time:"+ str(total_time) + \
+        ", total risk cost (before times p):"+ str(new_cost) +", optimal value:"+str(currentObj)
+        print (result)
+        return self.reconstruct(new_history,result)
     
-    def pqratio_plot(self,ratio_list):
+    def pqratio_plot(self,ratio_list,stage = None):
         default_q = self.q
+        if stage is None:
+            default_stage = self.stage
+        else:
+            default_stage = stage
         time_list = []
         risk_list =[]
         for q in ratio_list:
             self.q = q
-            self.Optimizer()
+            self.Optimizer(num_of_stage = default_stage)
             time_list.append(self.lastrun_data[0])
             risk_list.append(self.lastrun_data[1])
         fig, ax1 = plt.subplots()   
@@ -267,3 +289,5 @@ class ValueIterationModel():
         fig.tight_layout()
         plt.show()
         self.q = default_q
+        
+    
